@@ -18,6 +18,7 @@ class UserWidget(QPushButton):
             """)
 
         VLayout_user = QVBoxLayout()
+        VLayout_user.setContentsMargins(0, 0, 0, 0)  # внешние отступы
         VLayout_user.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
 
         self.user_img = QLabel(self)
@@ -46,12 +47,97 @@ class UserWidget(QPushButton):
         self.setLayout(VLayout_user)
 
 
+class AirportWidget(QPushButton):
+    def __init__(self, parent, airport_id, airport_name):
+        QPushButton.__init__(self, parent)
+        self.setObjectName("airport"+str(airport_id))
+        self.setFixedWidth(419)
+        self.setFixedHeight(215)
+        self.setStyleSheet("""
+            QPushButton {background:rgb(135, 136, 160);}
+            QPushButton:hover {background:rgb(70, 70, 116);}
+            """)
+
+        VLayout_airport = QVBoxLayout()
+        VLayout_airport.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        VLayout_airport.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+
+        self.airport_name = QLabel(self)
+        self.airport_name.setStyleSheet("background:rgb(217, 217, 217);")
+        self.airport_name.setFixedWidth(370)
+        self.airport_name.setFixedHeight(111)
+        self.airport_name.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
+        VLayout_lbl = QVBoxLayout()
+        self.lbl_name = QLabel(self)
+        self.lbl_name.setFont(QtGui.QFont('Helvetica', 48))
+        self.lbl_name.setFixedWidth(345)
+        self.lbl_name.setFixedHeight(45)
+        self.lbl_name.setText(airport_name)
+        self.lbl_name.setAlignment(Qt.AlignCenter)
+        self.lbl_name.setStyleSheet("background: 0; color: black;")
+        VLayout_lbl.addWidget(self.lbl_name)
+        VLayout_lbl.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
+        VLayout_lbl.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        self.airport_name.setLayout(VLayout_lbl)
+        VLayout_airport.addWidget(self.airport_name)
+
+        self.lbl_count_runways = QLabel(self)
+        self.lbl_count_runways.setFont(QtGui.QFont('Helvetica', 36, weight=QtGui.QFont.Bold))
+        self.lbl_count_runways.setFixedWidth(300)
+        self.lbl_count_runways.setFixedHeight(42)
+        self.lbl_count_runways.setContentsMargins(0, 8, 0, 0)  # внешние отступы
+        if airport_id == 0:
+            self.lbl_count_runways.setText("Кол-во полос: 1")
+        elif airport_id == 1:
+            self.lbl_count_runways.setText("Кол-во полос: 2")
+        elif airport_id == 2:
+            self.lbl_count_runways.setText("Кол-во полос: 3")
+        elif airport_id == 3:
+            self.lbl_count_runways.setText("Кол-во полос: 4")
+        self.lbl_count_runways.setStyleSheet("background: 0; color: white;")
+        VLayout_airport.addWidget(self.lbl_count_runways)
+
+        self.setLayout(VLayout_airport)
+
+
+# Кнопки "Далее" и "Выход"
+class NavigationBtn(QPushButton):
+    def __init__(self, parent, name):
+        QPushButton.__init__(self, parent)
+        self.setObjectName(name)
+        self.setFixedWidth(252)
+        self.setFixedHeight(65)
+        self.setStyleSheet("""
+            QPushButton {background:rgb(39, 39, 61); border-radius: 30px;}
+            QPushButton:hover {background:rgb(70, 70, 116); border-radius: 30px;}
+            QPushButton:pressed {background:rgb(135, 136, 160); border-radius: 30px;}
+            """)
+
+        VLayout_lbl = QVBoxLayout()
+        self.lbl_name = QLabel(self)
+        self.lbl_name.setFont(QtGui.QFont('Helvetica', 36))
+        self.lbl_name.setFixedWidth(110)
+        self.lbl_name.setFixedHeight(40)
+        if name == "further":
+            self.lbl_name.setText("Далее")
+        elif name == "exit":
+            self.lbl_name.setText("Выход")
+        self.lbl_name.setAlignment(Qt.AlignCenter)
+        self.lbl_name.setStyleSheet("background: 0; color: white;")
+        VLayout_lbl.addWidget(self.lbl_name)
+
+        VLayout_lbl.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
+        VLayout_lbl.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        self.setLayout(VLayout_lbl)
+
+
 class MainWidget(QWidget):
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
 
         self.current_user = ""  # выбранная карточка пользователя
+        self.current_airport = ""   # выбранная карточка аэропорта
 
         # Расстановка элементов
         VLayout_main = QVBoxLayout()
@@ -59,14 +145,13 @@ class MainWidget(QWidget):
 
         HLayout_users = QHBoxLayout()
 
-        self.lbl_user = QLabel(self)  # Заголовок
-        self.lbl_user.setFont(QtGui.QFont('Helvetica', 48, weight=QtGui.QFont.Bold))  # Изменяем шрифт
+        self.lbl_user = QLabel(self)  # заголовок
+        self.lbl_user.setFont(QtGui.QFont('Helvetica', 48, weight=QtGui.QFont.Bold))  # изменяем шрифт
         self.lbl_user.setFixedWidth(339)
         self.lbl_user.setFixedHeight(103)
         self.lbl_user.setWordWrap(True)  # перенос текста
-        self.lbl_user.setText("Выберите пользователя")  # Меняем текст
+        self.lbl_user.setText("Выберите пользователя")  # меняем текст
         self.lbl_user.setStyleSheet("color: black;")  # меняем цвет текста
-        #self.lbl_user.setAlignment(Qt.AlignTop)  # направление выравнивания (наверх)
         HLayout_users.addWidget(self.lbl_user)
 
         # Карточки пользователей
@@ -88,6 +173,47 @@ class MainWidget(QWidget):
         self.lbl_line.setStyleSheet("background-color: black;")  # меняем цвет текста
         VLayout_main.addWidget(self.lbl_line)
 
+
+        HLayout_airports = QHBoxLayout()
+
+        VLayout_title_btns = QVBoxLayout()
+
+        self.lbl_airport = QLabel(self)  # заголовок
+        self.lbl_airport.setFont(QtGui.QFont('Helvetica', 48, weight=QtGui.QFont.Bold))  # изменяем шрифт
+        self.lbl_airport.setFixedWidth(252)
+        self.lbl_airport.setFixedHeight(103)
+        self.lbl_airport.setWordWrap(True)  # перенос текста
+        self.lbl_airport.setText("Выберите аэропорт")  # меняем текст
+        self.lbl_airport.setStyleSheet("color: black;")  # меняем цвет текста
+        VLayout_title_btns.addWidget(self.lbl_airport)
+
+        # Кнопки "Далее" и "Выход"
+        self.btn_further = NavigationBtn(self, name="further")    # кнопка "Далее"
+        self.btn_further.clicked.connect(self.btnFurtherClick)  # при клике на кнопку
+        VLayout_title_btns.addWidget(self.btn_further, Qt.AlignBottom)
+        self.btn_exit = NavigationBtn(self, name="exit")  # кнопка "Выход"
+        self.btn_exit.clicked.connect(parent.close)  # при клике на кнопку
+        VLayout_title_btns.addWidget(self.btn_exit, Qt.AlignBottom)
+
+        HLayout_airports.addLayout(VLayout_title_btns)
+
+        # Карточки аэропортов
+        GridLayout_airports = QGridLayout()
+        self.airport_widget0 = AirportWidget(self, airport_id=0, airport_name="ALEKSIN")
+        self.airport_widget0.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        GridLayout_airports.addWidget(self.airport_widget0, 0, 0)
+        self.airport_widget1 = AirportWidget(self, airport_id=1, airport_name="KURSK")
+        self.airport_widget1.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        GridLayout_airports.addWidget(self.airport_widget1, 0, 1)
+        self.airport_widget2 = AirportWidget(self, airport_id=2, airport_name="TULA")
+        self.airport_widget2.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        GridLayout_airports.addWidget(self.airport_widget2, 1, 0)
+        self.airport_widget3 = AirportWidget(self, airport_id=3, airport_name="MOSCOW")
+        self.airport_widget3.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        GridLayout_airports.addWidget(self.airport_widget3, 1, 1)
+        HLayout_airports.addLayout(GridLayout_airports)
+
+        VLayout_main.addLayout(HLayout_airports)
         self.setLayout(VLayout_main)
 
     # Выбор карточки пользователя
@@ -119,6 +245,47 @@ class MainWidget(QWidget):
                     QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
                     """)
             self.current_user = btn_name    # присваиваем новую карточку пользователя
+
+    # Выбор карточки аэропорта
+    def btnAirportClick(self):
+        btn_name = self.sender().objectName()
+        # Выделяем карточку аэропорта
+        if btn_name == "airport0":
+            self.airport_widget0.setStyleSheet("QPushButton {background:rgb(39, 39, 61);}")
+        elif btn_name == "airport1":
+            self.airport_widget1.setStyleSheet("QPushButton {background:rgb(39, 39, 61);}")
+        elif btn_name == "airport2":
+            self.airport_widget2.setStyleSheet("QPushButton {background:rgb(39, 39, 61);}")
+        elif btn_name == "airport3":
+            self.airport_widget3.setStyleSheet("QPushButton {background:rgb(39, 39, 61);}")
+
+        if self.current_airport != btn_name:
+            # Убираем выделение предыдущей карточки аэропорта
+            if self.current_airport == "airport0":
+                self.airport_widget0.setStyleSheet("""
+                    QPushButton {background:rgb(135, 136, 160);}
+                    QPushButton:hover {background:rgb(70, 70, 116);}
+                    """)
+            elif self.current_airport == "airport1":
+                self.airport_widget1.setStyleSheet("""
+                    QPushButton {background:rgb(135, 136, 160);}
+                    QPushButton:hover {background:rgb(70, 70, 116);}
+                    """)
+            elif self.current_airport == "airport2":
+                self.airport_widget2.setStyleSheet("""
+                    QPushButton {background:rgb(135, 136, 160);}
+                    QPushButton:hover {background:rgb(70, 70, 116);}
+                    """)
+            elif self.current_airport == "airport3":
+                self.airport_widget3.setStyleSheet("""
+                    QPushButton {background:rgb(135, 136, 160);}
+                    QPushButton:hover {background:rgb(70, 70, 116);}
+                    """)
+            self.current_airport = btn_name  # присваиваем новую карточку аэропорта
+
+    # Проверка и следующий экран
+    def btnFurtherClick(self):
+        pass
 
 
 class MyWindow(QMainWindow):
