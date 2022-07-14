@@ -5,6 +5,30 @@ from PyQt5.QtCore import Qt
 import time
 
 
+# Кнопки "1", "2", "3", "4"
+class NumberBtn(QPushButton):
+    def __init__(self, parent, number):
+        QPushButton.__init__(self, parent)
+        self.setObjectName("btn"+number)
+        self.setFixedWidth(50)
+        self.setFixedHeight(50)
+        self.setStyleSheet("background:rgb(39, 39, 61); border-radius: 10px;")
+
+        VLayout_lbl = QVBoxLayout()
+        self.lbl_name = QLabel(self)
+        self.lbl_name.setText(number)
+        self.lbl_name.setFont(QtGui.QFont('Helvetica', 32, weight=QtGui.QFont.Bold))
+        self.lbl_name.setFixedWidth(50)
+        self.lbl_name.setFixedHeight(50)
+        self.lbl_name.setAlignment(Qt.AlignCenter)
+        self.lbl_name.setStyleSheet("background: 0; color: white;")
+        VLayout_lbl.addWidget(self.lbl_name)
+
+        VLayout_lbl.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
+        VLayout_lbl.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        self.setLayout(VLayout_lbl)
+
+
 # Кнопки "НАЧАТЬ", "Справка" и "Выход"
 class NavigationBtn(QPushButton):
     def __init__(self, parent, name, width, height):
@@ -13,9 +37,9 @@ class NavigationBtn(QPushButton):
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         self.setStyleSheet("""
-            QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}
-            QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-            QPushButton:pressed {background:rgb(135, 136, 160); border-radius: 20px;}
+            QPushButton {background:rgb(39, 39, 61); border-radius: 15px;}
+            QPushButton:hover {background:rgb(70, 70, 116); border-radius: 15px;}
+            QPushButton:pressed {background:rgb(135, 136, 160); border-radius: 15px;}
             """)
 
         VLayout_lbl = QVBoxLayout()
@@ -97,6 +121,7 @@ class MainWindow(QWidget):
         self.parent = parent
 
         self.btns_boarding_flights = []  # карточки рейсов на посадку
+        self.btns_takeoff_flights = []  # карточки рейсов на взлёт
 
         # Расстановка элементов
         VLayout_main = QVBoxLayout()
@@ -108,6 +133,7 @@ class MainWindow(QWidget):
         HLayout_flights_and_navigation.setAlignment(Qt.AlignHCenter)
         HLayout_flights_and_navigation.setSpacing(40)  # расстояние между элементами
 
+        # Рейсы на посадку
         VLayout_boarding_flights = QVBoxLayout()    # рейсы на посадку
         VLayout_boarding_flights.setAlignment(Qt.AlignVCenter)
         VLayout_boarding_flights.setContentsMargins(0, 0, 0, 0)  # внешние отступы
@@ -134,7 +160,7 @@ class MainWindow(QWidget):
         self.boarding_flights_count.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
         self.boarding_flights_count.setFixedWidth(88)
         self.boarding_flights_count.setFixedHeight(21)
-        self.boarding_flights_count.setText("0")  # меняем текст
+        self.boarding_flights_count.setText(str(len(self.btns_boarding_flights)))  # меняем текст
         self.boarding_flights_count.setStyleSheet("color: black;")  # меняем цвет текста
         HLayout_boarding_flights_count.addWidget(self.boarding_flights_count)
         VLayout_boarding_flights.addLayout(HLayout_boarding_flights_count)
@@ -146,19 +172,111 @@ class MainWindow(QWidget):
         self.scrollA_boarding_flights.setStyleSheet("background:rgb(39, 39, 61); border-radius: 15px;")
 
         self.scrollW_boarding_flights = QWidget()
-        self.scrollW_boarding_flights.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.scrollW_boarding_flights.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.VLayout_scroll_boarding_flights = QVBoxLayout()
         self.VLayout_scroll_boarding_flights.setAlignment(Qt.AlignTop)
         self.VLayout_scroll_boarding_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
         self.VLayout_scroll_boarding_flights.setSpacing(5)  # расстояние между элементами
-        for i in range(10):
-            self.VLayout_scroll_boarding_flights.addWidget(FlightWidget(self, id=0, number="2456", firm='"Победа"', model="Airbus-24"))
+        for i in range(2):
+            self.btns_boarding_flights.append(FlightWidget(self, id=0, number="2456", firm='"Победа"', model="Airbus-24"))
+            self.VLayout_scroll_boarding_flights.addWidget(self.btns_boarding_flights[-1])
         self.scrollW_boarding_flights.setLayout(self.VLayout_scroll_boarding_flights)
         self.scrollA_boarding_flights.setWidget(self.scrollW_boarding_flights)
 
         VLayout_boarding_flights.addWidget(self.scrollA_boarding_flights)
 
         HLayout_flights_and_navigation.addLayout(VLayout_boarding_flights)
+
+        VLayout_numbers = QVBoxLayout()  # кнопки с номерами
+        VLayout_numbers.setAlignment(Qt.AlignBottom)
+        VLayout_numbers.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        VLayout_numbers.setSpacing(18)  # расстояние между элементами
+        for i in range(4):
+            VLayout_numbers.addWidget(NumberBtn(self, number=str(i+1)))
+
+        HLayout_flights_and_navigation.addLayout(VLayout_numbers)
+
+        # Рейсы на взлёт
+        VLayout_takeoff_flights = QVBoxLayout()  # рейсы на посадку
+        VLayout_takeoff_flights.setAlignment(Qt.AlignVCenter)
+        VLayout_takeoff_flights.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+
+        self.lbl_takeoff_flights = QLabel(self)  # заголовок
+        self.lbl_takeoff_flights.setFont(QtGui.QFont('Helvetica', 36, weight=QtGui.QFont.Bold))  # изменяем шрифт
+        self.lbl_takeoff_flights.setFixedWidth(327)
+        self.lbl_takeoff_flights.setFixedHeight(48)
+        self.lbl_takeoff_flights.setText("Рейсы на взлёт")  # меняем текст
+        self.lbl_takeoff_flights.setStyleSheet("color: black;")  # меняем цвет текста
+        VLayout_takeoff_flights.addWidget(self.lbl_takeoff_flights)
+
+        HLayout_takeoff_flights_count = QHBoxLayout()
+        HLayout_takeoff_flights_count.setAlignment(Qt.AlignHCenter)
+        HLayout_takeoff_flights_count.setSpacing(10)  # расстояние между элементами
+        self.lbl_takeoff_flights_count = QLabel(self)  # заголовок
+        self.lbl_takeoff_flights_count.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
+        self.lbl_takeoff_flights_count.setFixedWidth(88)
+        self.lbl_takeoff_flights_count.setFixedHeight(21)
+        self.lbl_takeoff_flights_count.setText("кол-во:")  # меняем текст
+        self.lbl_takeoff_flights_count.setStyleSheet("color: black;")  # меняем цвет текста
+        HLayout_takeoff_flights_count.addWidget(self.lbl_takeoff_flights_count)
+        self.takeoff_flights_count = QLabel(self)  # заголовок
+        self.takeoff_flights_count.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
+        self.takeoff_flights_count.setFixedWidth(88)
+        self.takeoff_flights_count.setFixedHeight(21)
+        self.takeoff_flights_count.setText(str(len(self.btns_takeoff_flights)))  # меняем текст
+        self.takeoff_flights_count.setStyleSheet("color: black;")  # меняем цвет текста
+        HLayout_takeoff_flights_count.addWidget(self.takeoff_flights_count)
+        VLayout_takeoff_flights.addLayout(HLayout_takeoff_flights_count)
+
+        # Карточки рейсов на взлёт
+        self.scrollA_takeoff_flights = QScrollArea()
+        self.scrollA_takeoff_flights.setFixedWidth(421)
+        self.scrollA_takeoff_flights.setFixedHeight(222)
+        self.scrollA_takeoff_flights.setStyleSheet("background:rgb(39, 39, 61); border-radius: 15px;")
+
+        self.scrollW_takeoff_flights = QWidget()
+        self.scrollW_takeoff_flights.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.VLayout_scroll_takeoff_flights = QVBoxLayout()
+        self.VLayout_scroll_takeoff_flights.setAlignment(Qt.AlignTop)
+        self.VLayout_scroll_takeoff_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
+        self.VLayout_scroll_takeoff_flights.setSpacing(5)  # расстояние между элементами
+        for i in range(2):
+            self.btns_takeoff_flights.append(
+                FlightWidget(self, id=0, number="2456", firm='"Победа"', model="Airbus-24"))
+            self.VLayout_scroll_takeoff_flights.addWidget(self.btns_takeoff_flights[-1])
+        self.scrollW_takeoff_flights.setLayout(self.VLayout_scroll_takeoff_flights)
+        self.scrollA_takeoff_flights.setWidget(self.scrollW_takeoff_flights)
+
+        VLayout_takeoff_flights.addWidget(self.scrollA_takeoff_flights)
+
+        HLayout_flights_and_navigation.addLayout(VLayout_takeoff_flights)
+
+        # Кнопки "НАЧАТЬ", "Справка" и "Выход"
+        self.widget_btns_navigation = QWidget()
+        self.widget_btns_navigation.setFixedWidth(170)
+        self.widget_btns_navigation.setFixedHeight(217)
+        VLayout_btns_navigation = QVBoxLayout()  # кнопки с номерами
+        VLayout_btns_navigation.setAlignment(Qt.AlignVCenter)
+        VLayout_btns_navigation.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        VLayout_btns_navigation.setSpacing(18)  # расстояние между элементами
+        self.btn_start = NavigationBtn(self, name="start", width=170, height=61)  # кнопка "НАЧАТЬ"
+        self.btn_start.clicked.connect(self.btnStartClick)  # при клике на кнопку
+        VLayout_btns_navigation.addWidget(self.btn_start)
+        HLayout_btn_help = QHBoxLayout()
+        HLayout_btn_help.setAlignment(Qt.AlignRight)
+        HLayout_btn_help.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        self.btn_help = NavigationBtn(self, name="help", width=142, height=37)  # кнопка "Справка"
+        HLayout_btn_help.addWidget(self.btn_help)
+        VLayout_btns_navigation.addLayout(HLayout_btn_help)
+        HLayout_btn_exit = QHBoxLayout()
+        HLayout_btn_exit.setAlignment(Qt.AlignRight)
+        HLayout_btn_exit.setContentsMargins(0, 0, 0, 0)  # внешние отступы
+        self.btn_exit = NavigationBtn(self, name="exit", width=142, height=37)  # кнопка "Выход"
+        self.btn_exit.clicked.connect(parent.close)  # при клике на кнопку
+        HLayout_btn_exit.addWidget(self.btn_exit)
+        VLayout_btns_navigation.addLayout(HLayout_btn_exit)
+        self.widget_btns_navigation.setLayout(VLayout_btns_navigation)
+        HLayout_flights_and_navigation.addWidget(self.widget_btns_navigation)
 
         VLayout_main.addLayout(HLayout_flights_and_navigation)
 
@@ -169,13 +287,17 @@ class MainWindow(QWidget):
         self.lbl_line.setStyleSheet("background-color: black;")  # меняем цвет текста
         VLayout_main.addWidget(self.lbl_line)
 
-        # Кнопки "НАЧАТЬ", "Справка" и "Выход"
-        self.btn_start = NavigationBtn(self, name="start", width=170, height=61)  # кнопка "НАЧАТЬ"
-        self.btn_start.clicked.connect(self.btnStartClick)  # при клике на кнопку
-        VLayout_main.addWidget(self.btn_start)
-
         self.setLayout(VLayout_main)
 
     # Кнопка "НАЧАТЬ"
     def btnStartClick(self):
         time.sleep(1)
+        self.btns_boarding_flights.append(FlightWidget(self, id=0, number="2456", firm='"Победа"', model="Airbus-24"))
+        self.VLayout_scroll_boarding_flights.addWidget(self.btns_boarding_flights[-1])
+        self.scrollW_boarding_flights.setFixedHeight(len(self.btns_boarding_flights) * (42 + 10))
+        self.boarding_flights_count.setText(str(len(self.btns_boarding_flights)))  # меняем текст
+
+        self.btns_takeoff_flights.append(FlightWidget(self, id=0, number="2456", firm='"Победа"', model="Airbus-24"))
+        self.VLayout_scroll_takeoff_flights.addWidget(self.btns_takeoff_flights[-1])
+        self.scrollW_takeoff_flights.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
+        self.takeoff_flights_count.setText(str(len(self.btns_takeoff_flights)))  # меняем текст
