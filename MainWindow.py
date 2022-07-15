@@ -129,6 +129,19 @@ class MainWindow(QWidget):
         VLayout_main.setSpacing(50)     # расстояние между элементами
         VLayout_main.setContentsMargins(0, 0, 0, 0)  # внешние отступы
 
+        # Time
+        HLayout_time = QHBoxLayout()
+        HLayout_time.setAlignment(Qt.AlignRight)
+        HLayout_time.setContentsMargins(10, 10, 10, 10)  # внешние отступы
+        self.lbl_time = QLabel(self)  # заголовок
+        self.lbl_time.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
+        self.lbl_time.setFixedWidth(66)
+        self.lbl_time.setFixedHeight(18)
+        self.lbl_time.setText("00:00:00")  # меняем текст
+        self.lbl_time.setStyleSheet("color: black;")  # меняем цвет текста
+        HLayout_time.addWidget(self.lbl_time)
+        VLayout_main.addLayout(HLayout_time)
+
         HLayout_flights_and_navigation = QHBoxLayout()
         HLayout_flights_and_navigation.setAlignment(Qt.AlignHCenter)
         HLayout_flights_and_navigation.setSpacing(40)  # расстояние между элементами
@@ -287,6 +300,86 @@ class MainWindow(QWidget):
         self.lbl_line.setStyleSheet("background-color: black;")  # меняем цвет текста
         VLayout_main.addWidget(self.lbl_line)
 
+
+        # Полосы
+        HLayout_runway = QHBoxLayout()
+        HLayout_runway.setAlignment(Qt.AlignHCenter)
+        HLayout_runway.setSpacing(30)  # расстояние между элементами
+
+        # Полоса №1
+        self.scrollA_runway1 = QScrollArea()
+        self.scrollA_runway1.setFixedWidth(280)
+        self.scrollA_runway1.setFixedHeight(334)
+        self.scrollA_runway1.setStyleSheet("background:rgb(135, 136, 160); border-radius: 0px;")
+
+        self.scrollW_runway1 = QWidget()
+        self.scrollW_runway1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.scrollW_runway1.setFixedWidth(253)
+        self.VLayout_runway1_flights = QVBoxLayout()
+        self.VLayout_runway1_flights.setAlignment(Qt.AlignTop)
+        self.VLayout_runway1_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
+        self.VLayout_runway1_flights.setSpacing(5)  # расстояние между элементами
+        self.scrollW_runway1.setLayout(self.VLayout_runway1_flights)
+        self.scrollA_runway1.setWidget(self.scrollW_runway1)
+
+        HLayout_runway.addWidget(self.scrollA_runway1)
+
+        # Полоса №2
+        self.scrollA_runway2 = QScrollArea()
+        self.scrollA_runway2.setFixedWidth(280)
+        self.scrollA_runway2.setFixedHeight(334)
+        self.scrollA_runway2.setStyleSheet("background:rgb(135, 136, 160); border-radius: 0px;")
+
+        self.scrollW_runway2 = QWidget()
+        self.scrollW_runway2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.scrollW_runway2.setFixedWidth(253)
+        self.VLayout_runway2_flights = QVBoxLayout()
+        self.VLayout_runway2_flights.setAlignment(Qt.AlignTop)
+        self.VLayout_runway2_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
+        self.VLayout_runway2_flights.setSpacing(5)  # расстояние между элементами
+        self.scrollW_runway2.setLayout(self.VLayout_runway2_flights)
+        self.scrollA_runway2.setWidget(self.scrollW_runway2)
+
+        HLayout_runway.addWidget(self.scrollA_runway2)
+
+        # Полоса №3
+        self.scrollA_runway3 = QScrollArea()
+        self.scrollA_runway3.setFixedWidth(280)
+        self.scrollA_runway3.setFixedHeight(334)
+        self.scrollA_runway3.setStyleSheet("background:rgb(135, 136, 160); border-radius: 0px;")
+
+        self.scrollW_runway3 = QWidget()
+        self.scrollW_runway3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.scrollW_runway3.setFixedWidth(253)
+        self.VLayout_runway3_flights = QVBoxLayout()
+        self.VLayout_runway3_flights.setAlignment(Qt.AlignTop)
+        self.VLayout_runway3_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
+        self.VLayout_runway3_flights.setSpacing(5)  # расстояние между элементами
+        self.scrollW_runway3.setLayout(self.VLayout_runway3_flights)
+        self.scrollA_runway3.setWidget(self.scrollW_runway3)
+
+        HLayout_runway.addWidget(self.scrollA_runway3)
+
+        # Полоса №4
+        self.scrollA_runway4 = QScrollArea()
+        self.scrollA_runway4.setFixedWidth(280)
+        self.scrollA_runway4.setFixedHeight(334)
+        self.scrollA_runway4.setStyleSheet("background:rgb(135, 136, 160); border-radius: 0px;")
+
+        self.scrollW_runway4 = QWidget()
+        self.scrollW_runway4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.scrollW_runway4.setFixedWidth(253)
+        self.VLayout_runway4_flights = QVBoxLayout()
+        self.VLayout_runway4_flights.setAlignment(Qt.AlignTop)
+        self.VLayout_runway4_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
+        self.VLayout_runway4_flights.setSpacing(5)  # расстояние между элементами
+        self.scrollW_runway4.setLayout(self.VLayout_runway4_flights)
+        self.scrollA_runway4.setWidget(self.scrollW_runway4)
+
+        HLayout_runway.addWidget(self.scrollA_runway4)
+
+        VLayout_main.addLayout(HLayout_runway)
+
         self.setLayout(VLayout_main)
 
     # Кнопка "НАЧАТЬ"
@@ -301,3 +394,10 @@ class MainWindow(QWidget):
         self.VLayout_scroll_takeoff_flights.addWidget(self.btns_takeoff_flights[-1])
         self.scrollW_takeoff_flights.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
         self.takeoff_flights_count.setText(str(len(self.btns_takeoff_flights)))  # меняем текст
+
+
+        self.VLayout_runway1_flights.addWidget(self.btns_takeoff_flights[-2])
+        self.scrollW_runway1.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
+
+        self.VLayout_runway2_flights.addWidget(self.btns_takeoff_flights[-1])
+        self.scrollW_runway2.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
