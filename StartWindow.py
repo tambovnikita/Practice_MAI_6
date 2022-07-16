@@ -136,6 +136,7 @@ class MainWidget(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.parent = parent
+        self.main_window_create = False     # переменная, проверяющая создан ли объект MainWindow
 
         self.current_user = ""  # выбранная карточка пользователя
         self.current_airport = ""   # выбранная карточка аэропорта
@@ -300,16 +301,26 @@ class MainWidget(QWidget):
     # Проверка и следующий экран
     def btnFurtherClick(self):
         if len(self.current_user) != 0 and len(self.current_airport) != 0:
-            self.parent.setCentralWidget(MainWindow(self.current_user, self.current_airport, self))     # меняем экран
+            self.main_window = MainWindow(self.current_user, self.current_airport, self)
+            self.main_window_create = True
+            self.parent.setCentralWidget(self.main_window)     # меняем экран
+
+    def __del__(self):
+        if self.main_window_create == True:
+            del self.main_window
 
 
 class StartWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, app):
         super(StartWindow, self).__init__()
         self.setGeometry(0, 0, QApplication.desktop().screenGeometry().width(), QApplication.desktop().screenGeometry().height())
         self.setWindowTitle('Симулятор диспетчера аэропорта')   # название окна
         self.setWindowIcon(QtGui.QIcon('imgs/main.ico'))    # иконка окна
         self.setStyleSheet("background:rgb(172, 177, 202);")  # фон окна
+        self.main_widget = MainWidget(self)
+        self.setCentralWidget(self.main_widget)     # устанавливаем главный виджет
+        #self.setCentralWidget(MainWindow(parent=self, current_user=0, current_airport=0))  # устанавливаем главный виджет
 
-        #self.setCentralWidget(MainWidget(self))     # устанавливаем главный виджет
-        self.setCentralWidget(MainWindow(parent=self, current_user=0, current_airport=0))  # устанавливаем главный виджет
+    # Завершаем отдельный поток, если окно хотят закрыть
+    def closeEvent(self, event):
+        del self.main_widget

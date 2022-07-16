@@ -6,6 +6,6 @@ from StartWindow import StartWindow
 
 
 app = QApplication(sys.argv)
-win = StartWindow()
+win = StartWindow(app)
 win.show()
 sys.exit(app.exec_())
