@@ -208,7 +208,7 @@ class UpdateInfo(QObject):
 
 
 class MainWindow(QWidget):
-    def __init__(self, current_user, current_airport, parent=None):
+    def __init__(self, count_users, current_user, current_airport, parent=None):
         QWidget.__init__(self, parent)
         self.parent = parent
         self.btnStartActive = True  # при True кнопка имеет надпись "НАЧАТЬ", при False - "СТОП"
@@ -452,12 +452,12 @@ class MainWindow(QWidget):
 
         self.btns_takeoff_flights.append(FlightWidget(self, id=0, number="2456", firm='"Победа"', model="Airbus-24"))
         self.VLayout_scroll_takeoff_flights.addWidget(self.btns_takeoff_flights[-1])
-        self.scrollW_takeoff_flights.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
-        self.takeoff_flights_count.setText(str(len(self.btns_takeoff_flights)))  # меняем текст
+        #self.scrollW_takeoff_flights.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
+        self.takeoff_flights_count.setText(str(len(self.btns_takeoff_flights)))  # меняем текст"""
 
 
         self.runway1.VLayout_runway_flights.addWidget(self.btns_takeoff_flights[-2])
-        self.runway1.scrollW_runway.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))"""
+        #self.runway1.scrollW_runway.setFixedHeight(len(self.btns_takeoff_flights) * (42 + 10))
 
     def updateTime(self, time_string):
         self.lbl_time.setText(time_string)
