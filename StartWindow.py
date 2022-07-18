@@ -1,138 +1,11 @@
 
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QGridLayout, QWidget, QHBoxLayout, \
-    QVBoxLayout, QComboBox, QListView, QAbstractItemView, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QGridLayout, QWidget, QHBoxLayout, \
+    QVBoxLayout, QComboBox
 from PyQt5.QtCore import Qt
 
+from StartWindowWidgets import UserWidget, AirportWidget, NavigationBtn
 from MainWindow import MainWindow
-
-
-class UserWidget(QPushButton):
-    def __init__(self, parent, user_id):
-        QPushButton.__init__(self, parent)
-        self.setObjectName("user"+str(user_id))
-        self.setFixedWidth(125)
-        self.setFixedHeight(158)
-        self.setStyleSheet("""
-            QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-            QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-            """)
-
-        VLayout_user = QVBoxLayout()
-        VLayout_user.setContentsMargins(0, 0, 0, 0)  # внешние отступы
-        VLayout_user.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
-
-        self.user_img = QLabel(self)
-        self.user_img.setStyleSheet("background:rgb(217, 217, 217); border-radius: 10px;")
-        self.user_img.setFixedWidth(100)
-        self.user_img.setFixedHeight(100)
-        self.pixmap = QtGui.QPixmap('./imgs/users/user{}.png'.format(user_id))
-        self.user_img.setPixmap(self.pixmap)
-        self.user_img.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
-        VLayout_user.addWidget(self.user_img)
-
-        self.lbl_name_user = QLabel(self)
-        self.lbl_name_user.setFont(QtGui.QFont('Helvetica', 26, weight=QtGui.QFont.Bold))
-        self.lbl_name_user.setFixedWidth(100)
-        self.lbl_name_user.setFixedHeight(30)
-        self.lbl_name_user.setContentsMargins(0, 5, 0, 0)  # внешние отступы
-        self.lbl_name_user.setAlignment(Qt.AlignCenter)
-        if user_id == 0:
-            self.lbl_name_user.setText("Nikita")
-        elif user_id == 1:
-            self.lbl_name_user.setText("Ivan")
-        elif user_id == 2:
-            self.lbl_name_user.setText("Maria")
-        elif user_id == 3:
-            self.lbl_name_user.setText("Olga")
-        self.lbl_name_user.setStyleSheet("background: 0; color: white;")
-        VLayout_user.addWidget(self.lbl_name_user)
-
-        self.setLayout(VLayout_user)
-
-
-class AirportWidget(QPushButton):
-    def __init__(self, parent, airport_id, airport_name):
-        QPushButton.__init__(self, parent)
-        self.setObjectName("airport"+str(airport_id))
-        self.setFixedWidth(350)
-        self.setFixedHeight(163)
-        self.setStyleSheet("""
-            QPushButton {background:rgb(135, 136, 160); border: 0;}
-            QPushButton:hover {background:rgb(70, 70, 116); border: 0;}
-            """)
-
-        VLayout_airport = QVBoxLayout()
-        VLayout_airport.setContentsMargins(0, 0, 0, 0)  # внешние отступы
-        VLayout_airport.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
-
-        self.airport_name = QLabel(self)
-        self.airport_name.setStyleSheet("background:rgb(217, 217, 217);")
-        self.airport_name.setFixedWidth(300)
-        self.airport_name.setFixedHeight(85)
-        self.airport_name.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
-        VLayout_lbl = QVBoxLayout()
-        self.lbl_name = QLabel(self)
-        self.lbl_name.setFont(QtGui.QFont('Helvetica', 40))
-        self.lbl_name.setFixedWidth(203)
-        self.lbl_name.setFixedHeight(42)
-        self.lbl_name.setText(airport_name)
-        self.lbl_name.setAlignment(Qt.AlignCenter)
-        self.lbl_name.setStyleSheet("background: 0; color: black;")
-        VLayout_lbl.addWidget(self.lbl_name)
-        VLayout_lbl.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
-        VLayout_lbl.setContentsMargins(0, 0, 0, 0)  # внешние отступы
-        self.airport_name.setLayout(VLayout_lbl)
-        VLayout_airport.addWidget(self.airport_name)
-
-        self.lbl_count_runways = QLabel(self)
-        self.lbl_count_runways.setFont(QtGui.QFont('Helvetica', 24, weight=QtGui.QFont.Bold))
-        self.lbl_count_runways.setFixedWidth(300)
-        self.lbl_count_runways.setFixedHeight(28)
-        self.lbl_count_runways.setContentsMargins(0, 5, 0, 0)  # внешние отступы
-        if airport_id == 0:
-            self.lbl_count_runways.setText("Кол-во полос: 1")
-        elif airport_id == 1:
-            self.lbl_count_runways.setText("Кол-во полос: 2")
-        elif airport_id == 2:
-            self.lbl_count_runways.setText("Кол-во полос: 3")
-        elif airport_id == 3:
-            self.lbl_count_runways.setText("Кол-во полос: 4")
-        self.lbl_count_runways.setStyleSheet("background: 0; color: white;")
-        VLayout_airport.addWidget(self.lbl_count_runways)
-
-        self.setLayout(VLayout_airport)
-
-
-# Кнопки "Далее" и "Выход"
-class NavigationBtn(QPushButton):
-    def __init__(self, parent, name):
-        QPushButton.__init__(self, parent)
-        self.setObjectName(name)
-        self.setFixedWidth(182)
-        self.setFixedHeight(52)
-        self.setStyleSheet("""
-            QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}
-            QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-            QPushButton:pressed {background:rgb(135, 136, 160); border-radius: 20px;}
-            """)
-
-        VLayout_lbl = QVBoxLayout()
-        self.lbl_name = QLabel(self)
-        self.lbl_name.setFont(QtGui.QFont('Helvetica', 24))
-        self.lbl_name.setFixedWidth(77)
-        self.lbl_name.setFixedHeight(26)
-        if name == "further":
-            self.lbl_name.setText("Далее")
-        elif name == "exit":
-            self.lbl_name.setText("Выход")
-        self.lbl_name.setAlignment(Qt.AlignCenter)
-        self.lbl_name.setStyleSheet("background: 0; color: white;")
-        VLayout_lbl.addWidget(self.lbl_name)
-
-        VLayout_lbl.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)  # выравнивание (центр)
-        VLayout_lbl.setContentsMargins(0, 0, 0, 0)  # внешние отступы
-        self.setLayout(VLayout_lbl)
 
 
 class MainWidget(QWidget):
@@ -193,17 +66,17 @@ class MainWidget(QWidget):
 
         # Карточки пользователей
         self.user_widget0 = UserWidget(self, user_id=0)
-        self.user_widget0.clicked.connect(self.btnUserClick)    # при клике на карточку пользователя
+        self.user_widget0.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
         self.updateBtnUser("user0")
         HLayout_users.addWidget(self.user_widget0)
         self.user_widget1 = UserWidget(self, user_id=1)
-        self.user_widget1.clicked.connect(self.btnUserClick)    # при клике на карточку пользователя
+        self.user_widget1.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
         HLayout_users.addWidget(self.user_widget1)
         self.user_widget2 = UserWidget(self, user_id=2)
-        self.user_widget2.clicked.connect(self.btnUserClick)    # при клике на карточку пользователя
+        self.user_widget2.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
         HLayout_users.addWidget(self.user_widget2)
         self.user_widget3 = UserWidget(self, user_id=3)
-        self.user_widget3.clicked.connect(self.btnUserClick)    # при клике на карточку пользователя
+        self.user_widget3.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
         HLayout_users.addWidget(self.user_widget3)
 
         self.lbl_user = QLabel(self)  # заголовок
@@ -259,16 +132,16 @@ class MainWidget(QWidget):
         GridLayout_airports.setHorizontalSpacing(25)    # расстояние между столбцами
         GridLayout_airports.setVerticalSpacing(25)  # расстояние между строками
         self.airport_widget0 = AirportWidget(self, airport_id=0, airport_name="ALEKSIN")
-        self.airport_widget0.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        self.airport_widget0.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
         GridLayout_airports.addWidget(self.airport_widget0, 0, 0)
         self.airport_widget1 = AirportWidget(self, airport_id=1, airport_name="KURSK")
-        self.airport_widget1.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        self.airport_widget1.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
         GridLayout_airports.addWidget(self.airport_widget1, 0, 1)
         self.airport_widget2 = AirportWidget(self, airport_id=2, airport_name="TULA")
-        self.airport_widget2.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        self.airport_widget2.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
         GridLayout_airports.addWidget(self.airport_widget2, 1, 0)
         self.airport_widget3 = AirportWidget(self, airport_id=3, airport_name="MOSCOW")
-        self.airport_widget3.clicked.connect(self.btnAirportClick)  # при клике на карточку аэропорта
+        self.airport_widget3.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
         GridLayout_airports.addWidget(self.airport_widget3, 1, 1)
         HLayout_airports.addLayout(GridLayout_airports)
 
@@ -366,12 +239,12 @@ class MainWidget(QWidget):
                     self.current_user = btn_name  # присваиваем новую карточку пользователя
 
     # Выбор карточки пользователя
-    def btnUserClick(self):
+    def onBtnUserClick(self):
         btn_name = self.sender().objectName()
         self.updateBtnUser(btn_name)
 
     # Выбор карточки аэропорта
-    def btnAirportClick(self):
+    def onBtnAirportClick(self):
         btn_name = self.sender().objectName()
         # Выделяем карточку аэропорта
         if btn_name == "airport0":
@@ -426,9 +299,9 @@ class StartWindow(QMainWindow):
         self.setWindowTitle('Симулятор диспетчера аэропорта')   # название окна
         self.setWindowIcon(QtGui.QIcon('imgs/main.ico'))    # иконка окна
         self.setStyleSheet("background:rgb(172, 177, 202);")  # фон окна
-        self.main_widget = MainWidget(self)
-        self.setCentralWidget(self.main_widget)     # устанавливаем главный виджет
-        #self.setCentralWidget(MainWindow(parent=self, current_user=0, current_airport=0))  # устанавливаем главный виджет
+        #self.main_widget = MainWidget(self)
+        #self.setCentralWidget(self.main_widget)     # устанавливаем главный виджет
+        self.setCentralWidget(MainWindow(parent=self, count_users=1, current_user="user0", current_airport="airport0"))  # устанавливаем главный виджет
 
     # Завершаем отдельный поток, если окно хотят закрыть
     def closeEvent(self, event):
