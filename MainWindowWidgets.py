@@ -6,8 +6,10 @@ from PyQt5.QtCore import Qt
 
 # Карточки рейсов
 class FlightWidget(QPushButton):
-    def __init__(self, parent, id, number, firm, model):
+    def __init__(self, parent, type, id, number, firm, model):
         QPushButton.__init__(self, parent)
+        self.type = type
+        self.can_click = True
         self.setObjectName("flight"+id)
         self.setFixedWidth(401)
         self.setFixedHeight(42)
@@ -57,7 +59,10 @@ class NumberBtn(QPushButton):
         self.setObjectName("btnNumber"+number)
         self.setFixedWidth(50)
         self.setFixedHeight(50)
-        self.setStyleSheet("background:rgb(39, 39, 61); border-radius: 10px;")
+        self.setStyleSheet("""
+                QPushButton {background:rgb(39, 39, 61); border-radius: 10px; border: 0px;}
+                QPushButton:hover {background:rgb(39, 39, 61); border-radius: 10px; border: 2px solid rgb(172, 177, 202);}
+            """)
 
         VLayout_lbl = QVBoxLayout()
         self.lbl_name = QLabel(self)
@@ -82,7 +87,7 @@ class RunwayWidget(QWidget):
         self.setFixedWidth(280)
         self.setFixedHeight(334)
 
-        self.btns_runway = []  # карточки рейсов на данную полосу
+        #self.btns_runway = []  # карточки рейсов на данную полосу
 
         VLayout_runway = QVBoxLayout()
         VLayout_runway.setAlignment(Qt.AlignTop)
@@ -92,15 +97,26 @@ class RunwayWidget(QWidget):
         self.scrollA_runway = QScrollArea()
         self.scrollA_runway.setFixedWidth(280)
         self.scrollA_runway.setFixedHeight(334)
-        self.scrollA_runway.setStyleSheet("background:rgb(135, 136, 160); border-radius: 0px;")
+        self.scrollA_runway.setStyleSheet("""
+                QScrollArea {
+                    background-color: rgb(135, 136, 160);
+                    padding: 10px 5px;
+                    border-radius: 0px;
+                }
+                QScrollBar:vertical {
+                    background-color: rgb(135, 136, 160);
+                    width: 10px;
+                }
+            """)
 
         self.scrollW_runway = QWidget()
         self.scrollW_runway.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.scrollW_runway.setFixedWidth(253)
+        self.scrollW_runway.setStyleSheet("background-color: rgb(135, 136, 160);")
         self.VLayout_runway_flights = QVBoxLayout()
         self.VLayout_runway_flights.setAlignment(Qt.AlignTop)
-        self.VLayout_runway_flights.setContentsMargins(5, 5, 5, 5)  # внешние отступы
-        self.VLayout_runway_flights.setSpacing(5)  # расстояние между элементами
+        self.VLayout_runway_flights.setContentsMargins(5, 0, 0, 0)  # внешние отступы
+        self.VLayout_runway_flights.setSpacing(7)  # расстояние между элементами
         self.scrollW_runway.setLayout(self.VLayout_runway_flights)
         self.scrollA_runway.setWidget(self.scrollW_runway)
 
@@ -134,7 +150,7 @@ class RunwayWidget(QWidget):
         self.runway_count.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
         self.runway_count.setFixedWidth(20)
         self.runway_count.setFixedHeight(18)
-        self.runway_count.setText(str(len(self.btns_runway)))  # меняем текст
+        self.runway_count.setText("0")  # меняем текст
         self.runway_count.setStyleSheet("color: white;")  # меняем цвет текста
         self.runway_count.setAlignment(Qt.AlignBottom)
         HLayout_runway_title.addWidget(self.runway_count)
