@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 
 from StartWindowWidgets import UserWidget, AirportWidget, NavigationBtn
 from MainWindow import MainWindow
+from DataBaseMethods import count_all_users, count_all_airports, getUserInfo, getAirportInfo
 
 
 class MainWidget(QWidget):
@@ -14,9 +15,13 @@ class MainWidget(QWidget):
         self.parent = parent
         self.main_window_create = False     # переменная, проверяющая создан ли объект MainWindow
 
-        self.count_users = 4    # кол-во диспетчеров
-        self.current_user = "user0"  # выбранная карточка пользователя
-        self.current_airport = ""   # выбранная карточка аэропорта
+        self.btns_users = []    # карточки пользователей
+        self.btns_airports = []    # карточки аэропортов
+
+        self.count_users = count_all_users()    # кол-во диспетчеров
+        self.count_airports = count_all_airports()      # кол-во аэропортов
+        self.current_user = 0  # выбранная карточка пользователя
+        self.current_airport = 0   # выбранная карточка аэропорта
 
         # Расстановка элементов
         VLayout_main = QVBoxLayout()
@@ -54,30 +59,23 @@ class MainWidget(QWidget):
         self.combobox_count_users.setFont(QtGui.QFont('Helvetica', 20))  # изменяем шрифт
         self.combobox_count_users.setFixedWidth(80)
         self.combobox_count_users.setFixedHeight(40)
-        self.combobox_count_users.addItem("1")
-        self.combobox_count_users.addItem("2")
-        self.combobox_count_users.addItem("3")
-        self.combobox_count_users.addItem("4")
-        self.combobox_count_users.setCurrentIndex(3)    # устанавливаем значение по умолчанию
+        for i in range(self.count_users):
+            self.combobox_count_users.addItem(str(i+1))
+        self.combobox_count_users.setCurrentIndex(self.count_users-1)    # устанавливаем значение по умолчанию
         self.combobox_count_users.activated[str].connect(self.onComboBoxCountUsers)     # при выборе кол-ва диспетчеров
         HLayout_count_users.addWidget(self.combobox_count_users)
         VLayout_count_users.addLayout(HLayout_count_users)
         HLayout_users.addLayout(VLayout_count_users)
 
         # Карточки пользователей
-        self.user_widget0 = UserWidget(self, user_id=0)
-        self.user_widget0.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
-        self.updateBtnUser("user0")
-        HLayout_users.addWidget(self.user_widget0)
-        self.user_widget1 = UserWidget(self, user_id=1)
-        self.user_widget1.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
-        HLayout_users.addWidget(self.user_widget1)
-        self.user_widget2 = UserWidget(self, user_id=2)
-        self.user_widget2.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
-        HLayout_users.addWidget(self.user_widget2)
-        self.user_widget3 = UserWidget(self, user_id=3)
-        self.user_widget3.clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
-        HLayout_users.addWidget(self.user_widget3)
+        for i in range(self.count_users):
+            self.btns_users.append(UserWidget(self,
+                                              user_id=i,
+                                              user_name=getUserInfo(i, "name"),
+                                              user_img=getUserInfo(i, "img")))
+            self.btns_users[-1].clicked.connect(self.onBtnUserClick)    # при клике на карточку пользователя
+            HLayout_users.addWidget(self.btns_users[-1])
+        self.updateBtnUser(0)
 
         self.lbl_user = QLabel(self)  # заголовок
         self.lbl_user.setFont(QtGui.QFont('Helvetica', 32, weight=QtGui.QFont.Bold))  # изменяем шрифт
@@ -131,18 +129,14 @@ class MainWidget(QWidget):
         GridLayout_airports = QGridLayout()
         GridLayout_airports.setHorizontalSpacing(25)    # расстояние между столбцами
         GridLayout_airports.setVerticalSpacing(25)  # расстояние между строками
-        self.airport_widget0 = AirportWidget(self, airport_id=0, airport_name="ALEKSIN")
-        self.airport_widget0.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
-        GridLayout_airports.addWidget(self.airport_widget0, 0, 0)
-        self.airport_widget1 = AirportWidget(self, airport_id=1, airport_name="KURSK")
-        self.airport_widget1.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
-        GridLayout_airports.addWidget(self.airport_widget1, 0, 1)
-        self.airport_widget2 = AirportWidget(self, airport_id=2, airport_name="TULA")
-        self.airport_widget2.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
-        GridLayout_airports.addWidget(self.airport_widget2, 1, 0)
-        self.airport_widget3 = AirportWidget(self, airport_id=3, airport_name="MOSCOW")
-        self.airport_widget3.clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
-        GridLayout_airports.addWidget(self.airport_widget3, 1, 1)
+        for i in range(self.count_airports):
+            self.btns_airports.append(AirportWidget(self,
+                                                    airport_id=i,
+                                                    airport_name=getAirportInfo(i, "name"),
+                                                    count_runways=getAirportInfo(i, "count_runways")))
+            self.btns_airports[-1].clicked.connect(self.onBtnAirportClick)  # при клике на карточку аэропорта
+            GridLayout_airports.addWidget(self.btns_airports[-1], i//2, i%2)
+        self.updateBtnAirport(0)
         HLayout_airports.addLayout(GridLayout_airports)
 
         VLayout_main.addLayout(HLayout_airports)
@@ -151,141 +145,69 @@ class MainWidget(QWidget):
     # Отображение определённого кол-ва карточек пользователей
     def onComboBoxCountUsers(self, text):
         self.count_users = int(text)
-        self.current_user = "user0"
-        self.updateBtnUser("user0")
-        self.user_widget1.setStyleSheet("""
-                QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-                QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-            """)
-        self.user_widget2.setStyleSheet("""
-                QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-                QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-            """)
-        self.user_widget3.setStyleSheet("""
-                QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-                QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-            """)
-        self.user_widget0.user_img.hide()
-        self.user_widget0.lbl_name_user.hide()
-        self.user_widget1.user_img.hide()
-        self.user_widget1.lbl_name_user.hide()
-        self.user_widget2.user_img.hide()
-        self.user_widget2.lbl_name_user.hide()
-        self.user_widget3.user_img.hide()
-        self.user_widget3.lbl_name_user.hide()
-        if text == "1":
-            self.user_widget0.user_img.show()
-            self.user_widget0.lbl_name_user.show()
-        elif text == "2":
-            self.user_widget0.user_img.show()
-            self.user_widget0.lbl_name_user.show()
-            self.user_widget1.user_img.show()
-            self.user_widget1.lbl_name_user.show()
-        elif text == "3":
-            self.user_widget0.user_img.show()
-            self.user_widget0.lbl_name_user.show()
-            self.user_widget1.user_img.show()
-            self.user_widget1.lbl_name_user.show()
-            self.user_widget2.user_img.show()
-            self.user_widget2.lbl_name_user.show()
-        elif text == "4":
-            self.user_widget0.user_img.show()
-            self.user_widget0.lbl_name_user.show()
-            self.user_widget1.user_img.show()
-            self.user_widget1.lbl_name_user.show()
-            self.user_widget2.user_img.show()
-            self.user_widget2.lbl_name_user.show()
-            self.user_widget3.user_img.show()
-            self.user_widget3.lbl_name_user.show()
+        self.current_user = 0
+        self.updateBtnUser(0)
+
+        # Убираем выделение у остальных пользовательских карточек
+        for i in range(1, len(self.btns_users)):
+            self.btns_users[i].setStyleSheet("""
+                    QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
+                    QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
+                """)
+
+        # Скрываем фото и имена всех пользователей
+        for btn_user in self.btns_users:
+            btn_user.user_img.hide()
+            btn_user.lbl_name_user.hide()
+
+        # Показываем фото и имена только нужных пользователей
+        for i in range(int(text)):
+            self.btns_users[i].user_img.show()
+            self.btns_users[i].lbl_name_user.show()
 
     # Изменение стилей у карточек пользователей
-    def updateBtnUser(self, btn_name):
+    def updateBtnUser(self, btn_id):
         # Выделяем карточку пользователя
-        if btn_name == "user0" and self.count_users >= 1:
-            self.user_widget0.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}")
-        elif btn_name == "user1" and self.count_users >= 2:
-            self.user_widget1.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}")
-        elif btn_name == "user2" and self.count_users >= 3:
-            self.user_widget2.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}")
-        elif btn_name == "user3" and self.count_users == 4:
-            self.user_widget3.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}")
+        if self.count_users >= btn_id + 1:
+            self.btns_users[btn_id].setStyleSheet("QPushButton {background:rgb(39, 39, 61); border-radius: 20px;}")
 
-        if self.current_user != btn_name:
+        if self.current_user != btn_id:
             # Убираем выделение предыдущей карточки пользователя
-            if self.count_users >= int(btn_name[-1])+1:
-                if self.current_user == "user0":
-                    self.user_widget0.setStyleSheet("""
+            if self.count_users >= btn_id+1:
+                self.btns_users[self.current_user].setStyleSheet("""
                         QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
                         QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
                         """)
-                    self.current_user = btn_name  # присваиваем новую карточку пользователя
-                elif self.current_user == "user1":
-                    self.user_widget1.setStyleSheet("""
-                        QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-                        QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-                        """)
-                    self.current_user = btn_name  # присваиваем новую карточку пользователя
-                elif self.current_user == "user2":
-                    self.user_widget2.setStyleSheet("""
-                        QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-                        QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-                        """)
-                    self.current_user = btn_name  # присваиваем новую карточку пользователя
-                elif self.current_user == "user3":
-                    self.user_widget3.setStyleSheet("""
-                        QPushButton {background:rgb(135, 136, 160); border-radius: 20px;}
-                        QPushButton:hover {background:rgb(70, 70, 116); border-radius: 20px;}
-                        """)
-                    self.current_user = btn_name  # присваиваем новую карточку пользователя
+                self.current_user = btn_id  # присваиваем новую карточку пользователя
 
     # Выбор карточки пользователя
     def onBtnUserClick(self):
-        btn_name = self.sender().objectName()
-        self.updateBtnUser(btn_name)
+        btn_id = int(self.sender().objectName())
+        self.updateBtnUser(btn_id)
+
+    # Изменение стилей у карточек аэропортов
+    def updateBtnAirport(self, btn_id):
+        # Выделяем карточку аэропорта
+        self.btns_airports[btn_id].setStyleSheet("QPushButton {background:rgb(39, 39, 61); border: 0;}")
+
+        if self.current_airport != btn_id:
+            # Убираем выделение предыдущей карточки аэропорта
+            self.btns_airports[self.current_airport].setStyleSheet("""
+                        QPushButton {background:rgb(135, 136, 160); border: 0;}
+                        QPushButton:hover {background:rgb(70, 70, 116); border: 0;}
+                        """)
+            self.current_airport = btn_id  # присваиваем новую карточку аэропорта
 
     # Выбор карточки аэропорта
     def onBtnAirportClick(self):
-        btn_name = self.sender().objectName()
-        # Выделяем карточку аэропорта
-        if btn_name == "airport0":
-            self.airport_widget0.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border: 0;}")
-        elif btn_name == "airport1":
-            self.airport_widget1.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border: 0;}")
-        elif btn_name == "airport2":
-            self.airport_widget2.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border: 0;}")
-        elif btn_name == "airport3":
-            self.airport_widget3.setStyleSheet("QPushButton {background:rgb(39, 39, 61); border: 0;}")
+        btn_id = int(self.sender().objectName())
+        self.updateBtnAirport(btn_id)
 
-        if self.current_airport != btn_name:
-            # Убираем выделение предыдущей карточки аэропорта
-            if self.current_airport == "airport0":
-                self.airport_widget0.setStyleSheet("""
-                    QPushButton {background:rgb(135, 136, 160); border: 0;}
-                    QPushButton:hover {background:rgb(70, 70, 116); border: 0;}
-                    """)
-            elif self.current_airport == "airport1":
-                self.airport_widget1.setStyleSheet("""
-                    QPushButton {background:rgb(135, 136, 160); border: 0;}
-                    QPushButton:hover {background:rgb(70, 70, 116); border: 0;}
-                    """)
-            elif self.current_airport == "airport2":
-                self.airport_widget2.setStyleSheet("""
-                    QPushButton {background:rgb(135, 136, 160); border: 0;}
-                    QPushButton:hover {background:rgb(70, 70, 116); border: 0;}
-                    """)
-            elif self.current_airport == "airport3":
-                self.airport_widget3.setStyleSheet("""
-                    QPushButton {background:rgb(135, 136, 160); border: 0;}
-                    QPushButton:hover {background:rgb(70, 70, 116); border: 0;}
-                    """)
-            self.current_airport = btn_name  # присваиваем новую карточку аэропорта
-
-    # Проверка и следующий экран
+    # Следующий экран
     def btnFurtherClick(self):
-        if len(self.current_user) != 0 and len(self.current_airport) != 0:
-            self.main_window = MainWindow(self.count_users, self.current_user, self.current_airport, self)
-            self.main_window_create = True
-            self.parent.setCentralWidget(self.main_window)     # меняем экран
+        self.main_window = MainWindow(self.count_users, self.current_user, self.current_airport, self)
+        self.main_window_create = True
+        self.parent.setCentralWidget(self.main_window)     # меняем экран
 
     def __del__(self):
         if self.main_window_create == True:
@@ -299,11 +221,10 @@ class StartWindow(QMainWindow):
         self.setWindowTitle('Симулятор диспетчера аэропорта')   # название окна
         self.setWindowIcon(QtGui.QIcon('imgs/main.ico'))    # иконка окна
         self.setStyleSheet("background:rgb(172, 177, 202);")  # фон окна
-        #self.main_widget = MainWidget(self)
-        #self.setCentralWidget(self.main_widget)     # устанавливаем главный виджет
-        self.setCentralWidget(MainWindow(parent=self, count_users=1, current_user="user0", current_airport="airport0"))  # устанавливаем главный виджет
+        self.main_widget = MainWidget(self)
+        self.setCentralWidget(self.main_widget)     # устанавливаем главный виджет
 
     # Завершаем отдельный поток, если окно хотят закрыть
     def closeEvent(self, event):
         pass
-        #del self.main_widget
+        del self.main_widget
