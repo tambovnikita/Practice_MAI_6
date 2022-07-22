@@ -59,6 +59,20 @@ class HelpWindow(QDialog):
         self.lbl0.setStyleSheet("background-color:rgb(172, 177, 202); border-radius: 10px;")
         VLayout_lbls.addWidget(self.lbl0)
 
+        self.lbl_ogr = QLabel()
+        self.lbl_ogr.setFixedWidth(QApplication.desktop().screenGeometry().width() // 2.5)
+        self.lbl_ogr.setWordWrap(True)  # перенос текста
+        self.lbl_ogr.setFont(QtGui.QFont('Helvetica', 18))  # изменяем шрифт
+        self.lbl_ogr.setContentsMargins(30, 20, 30, 30)  # внешние отступы
+        self.lbl_ogr.setText("""<html><head/><body>
+                            <p style="line-height:30px;"><span>
+                            <b>Ограничение для диспетчера:</b> допустимо иметь в блоках "Рейсы на посадку" и "Рейсы на взлёт" не больше 10 карточек рейсов.
+                            </span></p>
+                            </body></html>
+                        """)
+        self.lbl_ogr.setStyleSheet("background-color:rgb(172, 177, 202); border-radius: 10px;")
+        VLayout_lbls.addWidget(self.lbl_ogr)
+
         self.lbl1 = QLabel()
         self.lbl1.setFixedWidth(QApplication.desktop().screenGeometry().width()//2.5)
         self.lbl1.setWordWrap(True)  # перенос текста
