@@ -2,7 +2,7 @@
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QGridLayout, QWidget, QHBoxLayout, \
     QVBoxLayout, QComboBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject
 
 from StartWindowWidgets import UserWidget, AirportWidget, NavigationBtn
 from MainWindow import MainWindow
