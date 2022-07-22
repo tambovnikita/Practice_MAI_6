@@ -6,13 +6,13 @@ from PyQt5.QtCore import Qt
 
 # Карточки рейсов
 class FlightWidget(QPushButton):
-    def __init__(self, parent, type, id, number, firm, model):
+    def __init__(self, parent, object_name, id, type, number, firm, model, time_show):
         QPushButton.__init__(self, parent)
         self.type = type
         self.can_click = True
-        self.setObjectName("flight"+id)
+        self.setObjectName(str(object_name))
         self.setFixedWidth(401)
-        self.setFixedHeight(42)
+        self.setFixedHeight(34)
         self.setStyleSheet("""
             QPushButton {background:rgb(217, 217, 217); border-radius: 10px; border: 0px;}
             QPushButton:hover {background:rgb(217, 217, 217); border-radius: 10px; border: 3px solid rgb(39, 39, 61);}
@@ -23,31 +23,40 @@ class FlightWidget(QPushButton):
         HLayout_flight.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
 
         self.lbl_number = QLabel(self)
-        self.lbl_number.setFont(QtGui.QFont('Helvetica', 20, weight=QtGui.QFont.Bold))  # изменяем шрифт
+        self.lbl_number.setFont(QtGui.QFont('Helvetica', 16, weight=QtGui.QFont.Bold))  # изменяем шрифт
         self.lbl_number.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-        self.lbl_number.setFixedWidth(77)
-        self.lbl_number.setFixedHeight(26)
-        self.lbl_number.setText(number)
+        self.lbl_number.setFixedWidth(63)
+        self.lbl_number.setFixedHeight(18)
+        self.lbl_number.setText(str(number))
         self.lbl_number.setAlignment(Qt.AlignCenter)
         HLayout_flight.addWidget(self.lbl_number)
 
         self.lbl_firm = QLabel(self)
-        self.lbl_firm.setFont(QtGui.QFont('Helvetica', 20))  # изменяем шрифт
+        self.lbl_firm.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
         self.lbl_firm.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-        self.lbl_firm.setFixedWidth(150)
-        self.lbl_firm.setFixedHeight(26)
-        self.lbl_firm.setText(firm)
-        self.lbl_firm.setAlignment(Qt.AlignCenter)
+        self.lbl_firm.setFixedWidth(120)
+        self.lbl_firm.setFixedHeight(18)
+        self.lbl_firm.setText(str(firm))
+        self.lbl_firm.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         HLayout_flight.addWidget(self.lbl_firm)
 
         self.lbl_model = QLabel(self)
-        self.lbl_model.setFont(QtGui.QFont('Helvetica', 20))  # изменяем шрифт
+        self.lbl_model.setFont(QtGui.QFont('Helvetica', 16))  # изменяем шрифт
         self.lbl_model.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-        self.lbl_model.setFixedWidth(150)
-        self.lbl_model.setFixedHeight(26)
-        self.lbl_model.setText(model)
-        self.lbl_model.setAlignment(Qt.AlignCenter)
+        self.lbl_model.setFixedWidth(120)
+        self.lbl_model.setFixedHeight(18)
+        self.lbl_model.setText(str(model))
+        self.lbl_model.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         HLayout_flight.addWidget(self.lbl_model)
+
+        self.lbl_time_show = QLabel(self)
+        self.lbl_time_show.setFont(QtGui.QFont('Helvetica', 12))  # изменяем шрифт
+        self.lbl_time_show.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+        self.lbl_time_show.setFixedWidth(60)
+        self.lbl_time_show.setFixedHeight(14)
+        self.lbl_time_show.setText(str(time_show))
+        self.lbl_time_show.setAlignment(Qt.AlignCenter)
+        HLayout_flight.addWidget(self.lbl_time_show)
 
         self.setLayout(HLayout_flight)
 
@@ -56,7 +65,7 @@ class FlightWidget(QPushButton):
 class NumberBtn(QPushButton):
     def __init__(self, parent, number):
         QPushButton.__init__(self, parent)
-        self.setObjectName("btnNumber"+number)
+        self.setObjectName(str(number-1))
         self.setFixedWidth(50)
         self.setFixedHeight(50)
         self.setStyleSheet("""
@@ -66,7 +75,7 @@ class NumberBtn(QPushButton):
 
         VLayout_lbl = QVBoxLayout()
         self.lbl_name = QLabel(self)
-        self.lbl_name.setText(number)
+        self.lbl_name.setText(str(number))
         self.lbl_name.setFont(QtGui.QFont('Helvetica', 32, weight=QtGui.QFont.Bold))
         self.lbl_name.setFixedWidth(50)
         self.lbl_name.setFixedHeight(50)
@@ -83,7 +92,7 @@ class NumberBtn(QPushButton):
 class RunwayWidget(QWidget):
     def __init__(self, parent, id):
         QWidget.__init__(self, parent)
-        self.setObjectName("runway"+str(id))
+        self.setObjectName(str(id-1))
         self.setFixedWidth(280)
         self.setFixedHeight(334)
 

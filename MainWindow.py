@@ -1,11 +1,12 @@
 
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QSizePolicy, QFrame
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QSizePolicy
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 import time, random
 
 from MainWindowWidgets import FlightWidget, NumberBtn, RunwayWidget, NavigationBtn
-
+from DataBaseMethods import getAirportInfo, getFlightInfo, count_all_flights
+from HelpWindow import HelpWindow
 
 class UpdateInfo(QObject):
     updateTimeSignal = pyqtSignal(str)
@@ -13,28 +14,45 @@ class UpdateInfo(QObject):
     checkCurrentSignal = pyqtSignal()
     finishSignal = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, current_airport):
         super(UpdateInfo, self).__init__()
+        self.current_airport = current_airport
         self.btnStartActive = True
 
     def start(self):
+        self.id = 0
+        # Синхронизируем время из базы данных с текущим временем
         i = 0
-        while self.btnStartActive != False:
-            time.sleep(1)
-            self.timeNow()
-            self.addFlights(i, random.choice(["boarding_flight", "takeoff_flight"]))
-            self.checkCurrentSignal.emit()
+        while True:
+            if time.strftime("%H:%M:%S", time.localtime()) == getFlightInfo(i, self.current_airport, "time_show"):
+                self.id = i
+                break
             i += 1
+            if i == count_all_flights(self.current_airport):
+                i = 0
+
+        # Начинаем добавлять рейсы из базы данных
+        while self.btnStartActive != False:
+            self.timeNow()
+            self.checkCurrentSignal.emit()
+            if time.strftime("%H:%M:%S", time.localtime()) == getFlightInfo(self.id, self.current_airport, "time_show"):
+                self.addFlights()
+                self.id += 1
+            time.sleep(1)
 
     def timeNow(self):
         time_string = time.strftime("%H:%M:%S", time.localtime())
         self.updateTimeSignal.emit(time_string)
 
-    def addFlights(self, i, type):
-            self.addFlightSignal.emit({"type": type, "id": "{}".format(i), "number": "{}".format(i), "firm": '"Победа"', "model": "Airbus-24"})
-        #for i in range(5, 10):
-        #    time.sleep(1)
-        #    self.addFlightSignal.emit({"type": "takeoff_flight", "id": "{}".format(i), "number": "{}".format(i), "firm": '"Победа"', "model": "Airbus-24"})
+    def addFlights(self):
+            self.addFlightSignal.emit(
+                {"id": self.id,
+                 "type": getFlightInfo(self.id, self.current_airport, "type"),
+                 "number": getFlightInfo(self.id, self.current_airport, "number"),
+                 "firm": getFlightInfo(self.id, self.current_airport, "firm"),
+                 "model": getFlightInfo(self.id, self.current_airport, "model"),
+                 "time_show": getFlightInfo(self.id, self.current_airport, "time_show")}
+            )
 
     def stop(self):
         self.btnStartActive = False
@@ -44,17 +62,26 @@ class MainWindow(QWidget):
     def __init__(self, count_users, current_user, current_airport, parent=None):
         QWidget.__init__(self, parent)
         self.parent = parent
+        self.count_users = count_users
+        self.current_user = current_user
+        self.current_airport = current_airport
+        self.count_runways = getAirportInfo(current_airport, "count_runways")
         self.btnStartActive = True  # при True кнопка имеет надпись "НАЧАТЬ", при False - "СТОП"
 
         self.btns_flights = []  # карточки рейсов
         self.btns_number = []   # кнопки "1", "2", "3", "4"
         self.runways = []   # взлётно-посадочные полосы
+
+        self.count_all_flights = 0  # кол-во всех задействованных рейсов
         self.count_boarding_flights = 0     # кол-во рейсов на посадку
         self.count_takeoff_flights = 0      # кол-во рейсов на взлёт
-        self.count_runways = [0, 0, 0, 0]  # кол-во рейсов на взлётно-посадочных полосах
 
-        self.current_runway = 0    # номер выбранной взлётно-посадочной полосы
-        self.current_flight = "-1"  # id выбранного рейса
+        self.count_flights_on_runways = []  # кол-во рейсов на взлётно-посадочных полосах
+        for i in range(self.count_runways):
+            self.count_flights_on_runways.append(0)
+
+        self.current_runway = -1    # номер выбранной взлётно-посадочной полосы
+        self.current_flight = -1    # id выбранного рейса
 
         # Расстановка элементов
         VLayout_main = QVBoxLayout()
@@ -154,8 +181,8 @@ class MainWindow(QWidget):
         VLayout_numbers.setAlignment(Qt.AlignBottom)
         VLayout_numbers.setContentsMargins(0, 0, 0, 12)  # внешние отступы
         VLayout_numbers.setSpacing(6)  # расстояние между элементами
-        for i in range(4):
-            self.btns_number.append(NumberBtn(self, number=str(i+1)))
+        for i in range(self.count_runways):
+            self.btns_number.append(NumberBtn(self, number=i+1))
             self.btns_number[-1].clicked.connect(self.onBtnNumberClick)  # при клике на кнопку
             VLayout_numbers.addWidget(self.btns_number[-1])
 
@@ -242,6 +269,7 @@ class MainWindow(QWidget):
         HLayout_btn_help.setAlignment(Qt.AlignRight)
         HLayout_btn_help.setContentsMargins(0, 30, 0, 0)  # внешние отступы
         self.btn_help = NavigationBtn(self, name="help", width=142, height=37)  # кнопка "Справка"
+        self.btn_help.clicked.connect(self.onBtnHelpClick)  # при клике на кнопку
         HLayout_btn_help.addWidget(self.btn_help)
         VLayout_btns_navigation.addLayout(HLayout_btn_help)
         HLayout_btn_exit = QHBoxLayout()
@@ -268,7 +296,7 @@ class MainWindow(QWidget):
         HLayout_runway = QHBoxLayout()
         HLayout_runway.setAlignment(Qt.AlignHCenter)
         HLayout_runway.setSpacing(30)  # расстояние между элементами
-        for i in range(4):
+        for i in range(self.count_runways):
             self.runways.append(RunwayWidget(self, id=i+1))
             HLayout_runway.addWidget(self.runways[-1])
         VLayout_main.addLayout(HLayout_runway)
@@ -277,46 +305,58 @@ class MainWindow(QWidget):
 
     # Выбор номера взлётно-посадочной полосы
     def onBtnNumberClick(self):
-        btn_name = self.sender().objectName()
+        btn_name = int(self.sender().objectName())
         # Выделяем кнопку
-        self.btns_number[int(btn_name[-1])-1].setStyleSheet("""
+        self.btns_number[btn_name].setStyleSheet("""
                 QPushButton {background:rgb(70, 70, 116); border-radius: 10px; border: 4px solid rgb(39, 39, 61);}
             """)
-        if self.current_runway != int(btn_name[-1]):
+        if self.current_runway == -1:
+            self.current_runway = btn_name  # присваиваем новый номер взлётно-посадочной полосы
+        if self.current_runway != btn_name:
             # Убираем выделение предыдущей кнопки
-            self.btns_number[self.current_runway-1].setStyleSheet("""
+            self.btns_number[self.current_runway].setStyleSheet("""
                     QPushButton {background:rgb(39, 39, 61); border-radius: 10px; border: 0px;}
                     QPushButton:hover {background:rgb(39, 39, 61); border-radius: 10px; border: 2px solid rgb(172, 177, 202);}
                 """)
-            self.current_runway = int(btn_name[-1])  # присваиваем новый номер взлётно-посадочной полосы
+            self.current_runway = btn_name  # присваиваем новый номер взлётно-посадочной полосы
 
     # Выбор рейса
     def onBtnFlightClick(self):
-        btn_name = self.sender().objectName()
-        if self.btns_flights[int(btn_name[6:])].can_click == True:
+        btn_name = int(self.sender().objectName())
+        print(btn_name)
+        if self.btns_flights[btn_name].can_click == True:
             # Выделяем кнопку
-            self.btns_flights[int(btn_name[6:])].setStyleSheet("""
+            self.btns_flights[btn_name].setStyleSheet("""
                     QPushButton {background-color:rgb(70, 70, 116); border-radius: 10px; border: 3px solid rgb(39, 39, 61);}
                 """)
-            self.btns_flights[int(btn_name[6:])].lbl_number.setStyleSheet("background:rgb(70, 70, 116); color:white;")
-            self.btns_flights[int(btn_name[6:])].lbl_firm.setStyleSheet("background:rgb(70, 70, 116); color:white;")
-            self.btns_flights[int(btn_name[6:])].lbl_model.setStyleSheet("background:rgb(70, 70, 116); color:white;")
-            if self.current_flight != btn_name[6:]:
+            self.btns_flights[btn_name].lbl_number.setStyleSheet("background:rgb(70, 70, 116); color:white;")
+            self.btns_flights[btn_name].lbl_firm.setStyleSheet("background:rgb(70, 70, 116); color:white;")
+            self.btns_flights[btn_name].lbl_model.setStyleSheet("background:rgb(70, 70, 116); color:white;")
+            self.btns_flights[btn_name].lbl_time_show.setStyleSheet("background:rgb(70, 70, 116); color:white;")
+            if self.current_flight == -1:
+                self.current_flight = btn_name  # присваиваем новую карточку рейса
+            if self.current_flight != btn_name:
                 # Убираем выделение предыдущей кнопки
-                self.btns_flights[int(self.current_flight)].setStyleSheet("""
+                self.btns_flights[self.current_flight].setStyleSheet("""
                         QPushButton {background:rgb(217, 217, 217); border-radius: 10px; border: 0px;}
                         QPushButton:hover {background:rgb(217, 217, 217); border-radius: 10px; border: 3px solid rgb(39, 39, 61);}
                     """)
-                self.btns_flights[int(self.current_flight)].lbl_number.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-                self.btns_flights[int(self.current_flight)].lbl_firm.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-                self.btns_flights[int(self.current_flight)].lbl_model.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-                self.current_flight = btn_name[6:]  # присваиваем новый номер взлётно-посадочной полосы
+                self.btns_flights[self.current_flight].lbl_number.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+                self.btns_flights[self.current_flight].lbl_firm.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+                self.btns_flights[self.current_flight].lbl_model.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+                self.btns_flights[self.current_flight].lbl_time_show.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+                self.current_flight = btn_name  # присваиваем новую карточку рейса
+
+    # Кнопка "Справка"
+    def onBtnHelpClick(self):
+        help_window = HelpWindow(self)
+        help_window.show()
 
     # Кнопка "НАЧАТЬ"
     def btnStartClick(self):
         if self.btnStartActive == True:
             self.btn_start.lbl_name.setText("СТОП")
-            self.obj_update_info = UpdateInfo()     # объект, в котором происходит работа со временем и данными из базы данных
+            self.obj_update_info = UpdateInfo(self.current_airport)     # объект, в котором происходит работа со временем и данными из базы данных
             self.thread = QThread()  # отдельный поток для обновления данных на экране
             self.obj_update_info.moveToThread(self.thread)  # добавляем созданный объект в отдельный поток
             self.thread.started.connect(self.obj_update_info.start)     # при старте потока запускается функция start в объекте
@@ -337,77 +377,81 @@ class MainWindow(QWidget):
         self.lbl_time.setText(time_string)
 
     def addFlight(self, flight_info):
+        self.btns_flights.append(FlightWidget(self,
+                                              object_name=self.count_all_flights,
+                                              id=flight_info["id"],
+                                              type=flight_info["type"],
+                                              number=flight_info["number"],
+                                              firm=flight_info["firm"],
+                                              model=flight_info["model"],
+                                              time_show=flight_info["time_show"]
+                                              )
+                                 )
+        self.btns_flights[-1].clicked.connect(self.onBtnFlightClick)  # при клике на кнопку
+        self.count_all_flights += 1
+
         if flight_info["type"] == "boarding_flight":
-            self.btns_flights.append(FlightWidget(self,
-                                                  type=flight_info["type"],
-                                                  id=flight_info["id"],
-                                                  number=flight_info["number"],
-                                                  firm=flight_info["firm"],
-                                                  model=flight_info["model"]))
             self.count_boarding_flights += 1
-            self.btns_flights[-1].clicked.connect(self.onBtnFlightClick)  # при клике на кнопку
             self.VLayout_scroll_boarding_flights.addWidget(self.btns_flights[-1])
-            self.scrollW_boarding_flights.setFixedHeight(self.count_boarding_flights * (42 + 7))
+            self.scrollW_boarding_flights.setFixedHeight(self.count_boarding_flights * (34 + 7))
             self.boarding_flights_count.setText(str(self.count_boarding_flights))  # меняем текст
 
         elif flight_info["type"] == "takeoff_flight":
-            self.btns_flights.append(FlightWidget(self,
-                                                  type=flight_info["type"],
-                                                  id=flight_info["id"],
-                                                  number=flight_info["number"],
-                                                  firm=flight_info["firm"],
-                                                  model=flight_info["model"]))
             self.count_takeoff_flights += 1
-            self.btns_flights[-1].clicked.connect(self.onBtnFlightClick)  # при клике на кнопку
             self.VLayout_scroll_takeoff_flights.addWidget(self.btns_flights[-1])
-            self.scrollW_takeoff_flights.setFixedHeight(self.count_takeoff_flights * (42 + 7))
+            self.scrollW_takeoff_flights.setFixedHeight(self.count_takeoff_flights * (34 + 7))
             self.takeoff_flights_count.setText(str(self.count_takeoff_flights))  # меняем текст
 
     def updateRunways(self):
-        if self.current_runway != 0 and self.current_flight != "-1":
-            if self.btns_flights[int(self.current_flight)].type == "boarding_flight":
+        if self.current_runway != -1 and self.current_flight != -1:
+            if self.btns_flights[self.current_flight].type == "boarding_flight":
                 self.count_boarding_flights -= 1
                 self.scrollW_boarding_flights.setFixedHeight(self.count_boarding_flights * (42 + 7))
                 self.boarding_flights_count.setText(str(self.count_boarding_flights))  # меняем текст
-            elif self.btns_flights[int(self.current_flight)].type == "takeoff_flight":
+            elif self.btns_flights[self.current_flight].type == "takeoff_flight":
                 self.count_takeoff_flights -= 1
                 self.scrollW_takeoff_flights.setFixedHeight(self.count_takeoff_flights * (42 + 7))
                 self.takeoff_flights_count.setText(str(self.count_takeoff_flights))  # меняем текст
-            self.count_runways[self.current_runway-1] += 1
-            self.runways[self.current_runway-1].VLayout_runway_flights.addWidget(self.btns_flights[int(self.current_flight)])
-            self.runways[self.current_runway-1].scrollW_runway.setFixedHeight(self.count_runways[self.current_runway-1] * (50 + 13))
-            self.runways[self.current_runway-1].runway_count.setText(str(self.count_runways[self.current_runway-1]))  # меняем текст
+            self.count_flights_on_runways[self.current_runway] += 1
+            self.runways[self.current_runway].VLayout_runway_flights.addWidget(self.btns_flights[self.current_flight])
+            self.runways[self.current_runway].scrollW_runway.setFixedHeight(self.count_flights_on_runways[self.current_runway] * (50 + 13))
+            self.runways[self.current_runway].runway_count.setText(str(self.count_flights_on_runways[self.current_runway]))  # меняем текст
 
             # Убираем выделение у кнопки с номером
-            self.btns_number[self.current_runway - 1].setStyleSheet("""
+            self.btns_number[self.current_runway].setStyleSheet("""
                     QPushButton {background:rgb(39, 39, 61); border-radius: 10px; border: 0px;}
                     QPushButton:hover {background:rgb(39, 39, 61); border-radius: 10px; border: 2px solid rgb(172, 177, 202);}
                 """)
-            self.current_runway = 0
+            self.current_runway = -1
 
             # Устанавливаем новые стили у карточки рейса
-            self.btns_flights[int(self.current_flight)].setStyleSheet("""
+            self.btns_flights[self.current_flight].setStyleSheet("""
                     QPushButton {background:rgb(217, 217, 217); border-radius: 0px; border: 0px;}
                 """)
-            self.btns_flights[int(self.current_flight)].setFixedWidth(253)
-            self.btns_flights[int(self.current_flight)].setFixedHeight(50)
-            self.btns_flights[int(self.current_flight)].can_click = False
-            self.btns_flights[int(self.current_flight)].lbl_number.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-            self.btns_flights[int(self.current_flight)].lbl_number.setFont(QtGui.QFont('Helvetica', 12, weight=QtGui.QFont.Bold))  # изменяем шрифт
-            self.btns_flights[int(self.current_flight)].lbl_number.setFixedWidth(50)
-            self.btns_flights[int(self.current_flight)].lbl_number.setFixedHeight(45)
-            self.btns_flights[int(self.current_flight)].lbl_number.setWordWrap(True)  # перенос текста
-            self.btns_flights[int(self.current_flight)].lbl_firm.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-            self.btns_flights[int(self.current_flight)].lbl_firm.setFont(QtGui.QFont('Helvetica', 12))  # изменяем шрифт
-            self.btns_flights[int(self.current_flight)].lbl_firm.setFixedWidth(90)
-            self.btns_flights[int(self.current_flight)].lbl_firm.setFixedHeight(45)
-            self.btns_flights[int(self.current_flight)].lbl_firm.setWordWrap(True)  # перенос текста
-            self.btns_flights[int(self.current_flight)].lbl_model.setStyleSheet("background:rgb(217, 217, 217); color:black;")
-            self.btns_flights[int(self.current_flight)].lbl_model.setFont(QtGui.QFont('Helvetica', 12))  # изменяем шрифт
-            self.btns_flights[int(self.current_flight)].lbl_model.setFixedWidth(90)
-            self.btns_flights[int(self.current_flight)].lbl_model.setFixedHeight(45)
-            self.btns_flights[int(self.current_flight)].lbl_model.setWordWrap(True)  # перенос текста
-            self.current_flight = "-1"
+            self.btns_flights[self.current_flight].setFixedWidth(253)
+            self.btns_flights[self.current_flight].setFixedHeight(50)
+            self.btns_flights[self.current_flight].can_click = False
+            self.btns_flights[self.current_flight].lbl_number.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+            self.btns_flights[self.current_flight].lbl_number.setFont(QtGui.QFont('Helvetica', 11, weight=QtGui.QFont.Bold))  # изменяем шрифт
+            self.btns_flights[self.current_flight].lbl_number.setFixedWidth(38)
+            self.btns_flights[self.current_flight].lbl_number.setFixedHeight(46)
+            self.btns_flights[self.current_flight].lbl_number.setWordWrap(True)  # перенос текста
+            self.btns_flights[self.current_flight].lbl_firm.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+            self.btns_flights[self.current_flight].lbl_firm.setFont(QtGui.QFont('Helvetica', 11))  # изменяем шрифт
+            self.btns_flights[self.current_flight].lbl_firm.setFixedWidth(70)
+            self.btns_flights[self.current_flight].lbl_firm.setFixedHeight(45)
+            self.btns_flights[self.current_flight].lbl_firm.setWordWrap(True)  # перенос текста
+            self.btns_flights[self.current_flight].lbl_model.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+            self.btns_flights[self.current_flight].lbl_model.setFont(QtGui.QFont('Helvetica', 11))  # изменяем шрифт
+            self.btns_flights[self.current_flight].lbl_model.setFixedWidth(70)
+            self.btns_flights[self.current_flight].lbl_model.setFixedHeight(45)
+            self.btns_flights[self.current_flight].lbl_model.setWordWrap(True)  # перенос текста
+            self.btns_flights[self.current_flight].lbl_time_show.setStyleSheet("background:rgb(217, 217, 217); color:black;")
+            self.btns_flights[self.current_flight].lbl_time_show.setFont(QtGui.QFont('Helvetica', 9))  # изменяем шрифт
+            self.btns_flights[self.current_flight].lbl_time_show.setFixedWidth(36)
+            self.btns_flights[self.current_flight].lbl_time_show.setFixedHeight(22)
+            self.btns_flights[self.current_flight].lbl_time_show.setWordWrap(True)  # перенос текста
+            self.current_flight = -1
 
     def __del__(self):
         if self.btnStartActive == False:
