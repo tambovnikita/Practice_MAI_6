@@ -6,10 +6,14 @@ from PyQt5.QtCore import Qt
 
 # Карточки рейсов
 class FlightWidget(QPushButton):
-    def __init__(self, parent, object_name, id, type, number, firm, model, time_show):
+    def __init__(self, parent, object_name, id, type, number, firm, model, time_show, time_on_runway):
         QPushButton.__init__(self, parent)
+        self.id = id
         self.type = type
+        self.time_on_runway = time_on_runway
+        self.current_runway = -1
         self.can_click = True
+        self.start_time_on_runway = ""
         self.setObjectName(str(object_name))
         self.setFixedWidth(401)
         self.setFixedHeight(34)

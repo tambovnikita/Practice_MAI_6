@@ -1,11 +1,12 @@
 
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QSizePolicy, QMessageBox
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 import time, random
+from datetime import datetime, timedelta
 
 from MainWindowWidgets import FlightWidget, NumberBtn, RunwayWidget, NavigationBtn
-from DataBaseMethods import getAirportInfo, getFlightInfo, count_all_flights
+from DataBaseMethods import getAirportInfo, getFlightInfo, count_all_flights, count_all_statistics, setUserStatistics, setSessionsInfo
 from HelpWindow import HelpWindow
 
 class UpdateInfo(QObject):
@@ -14,8 +15,9 @@ class UpdateInfo(QObject):
     checkCurrentSignal = pyqtSignal()
     finishSignal = pyqtSignal()
 
-    def __init__(self, current_airport):
+    def __init__(self, count_users, current_airport):
         super(UpdateInfo, self).__init__()
+        self.count_users = count_users
         self.current_airport = current_airport
         self.btnStartActive = True
 
@@ -37,7 +39,8 @@ class UpdateInfo(QObject):
             self.checkCurrentSignal.emit()
             if time.strftime("%H:%M:%S", time.localtime()) == getFlightInfo(self.id, self.current_airport, "time_show"):
                 self.addFlights()
-                self.id += 1
+                # Чем больше диспетчеров в аэропорту, тем меньше нагрузка для пользователя
+                self.id += self.count_users
             time.sleep(1)
 
     def timeNow(self):
@@ -51,7 +54,8 @@ class UpdateInfo(QObject):
                  "number": getFlightInfo(self.id, self.current_airport, "number"),
                  "firm": getFlightInfo(self.id, self.current_airport, "firm"),
                  "model": getFlightInfo(self.id, self.current_airport, "model"),
-                 "time_show": getFlightInfo(self.id, self.current_airport, "time_show")}
+                 "time_show": getFlightInfo(self.id, self.current_airport, "time_show"),
+                 "time_on_runway": getFlightInfo(self.id, self.current_airport, "time_on_runway")}
             )
 
     def stop(self):
@@ -276,7 +280,7 @@ class MainWindow(QWidget):
         HLayout_btn_exit.setAlignment(Qt.AlignRight)
         HLayout_btn_exit.setContentsMargins(0, 0, 0, 0)  # внешние отступы
         self.btn_exit = NavigationBtn(self, name="exit", width=142, height=37)  # кнопка "Выход"
-        self.btn_exit.clicked.connect(parent.close)  # при клике на кнопку
+        self.btn_exit.clicked.connect(self.parent.parent.close)  # при клике на кнопку
         HLayout_btn_exit.addWidget(self.btn_exit)
         VLayout_btns_navigation.addLayout(HLayout_btn_exit)
         self.widget_btns_navigation.setLayout(VLayout_btns_navigation)
@@ -323,7 +327,6 @@ class MainWindow(QWidget):
     # Выбор рейса
     def onBtnFlightClick(self):
         btn_name = int(self.sender().objectName())
-        print(btn_name)
         if self.btns_flights[btn_name].can_click == True:
             # Выделяем кнопку
             self.btns_flights[btn_name].setStyleSheet("""
@@ -353,10 +356,13 @@ class MainWindow(QWidget):
         help_window.show()
 
     # Кнопка "НАЧАТЬ"
-    def btnStartClick(self):
+    def btnStartClick(self, status):
+        if status != "failed":
+            status = "succeed"
         if self.btnStartActive == True:
+            self.date_start = datetime.now()
             self.btn_start.lbl_name.setText("СТОП")
-            self.obj_update_info = UpdateInfo(self.current_airport)     # объект, в котором происходит работа со временем и данными из базы данных
+            self.obj_update_info = UpdateInfo(self.count_users, self.current_airport)     # объект, в котором происходит работа со временем и данными из базы данных
             self.thread = QThread()  # отдельный поток для обновления данных на экране
             self.obj_update_info.moveToThread(self.thread)  # добавляем созданный объект в отдельный поток
             self.thread.started.connect(self.obj_update_info.start)     # при старте потока запускается функция start в объекте
@@ -368,10 +374,31 @@ class MainWindow(QWidget):
             self.btnStartActive = False
 
         elif self.btnStartActive == False:
+            self.date_end = datetime.now()
             self.obj_update_info.stop()     # останавливаем все процессы внутри объекта
             self.thread.quit()  # завершаем отдельный поток
             self.btn_start.lbl_name.setText("НАЧАТЬ")
             self.btnStartActive = True
+            # Собираем и отправляем статистику
+            setUserStatistics(id=count_all_statistics(),
+                              user_id=self.current_user,
+                              airport_id=self.current_airport,
+                              count_users_in_airport=self.count_users,
+                              time_spent=str(self.date_end-self.date_start),
+                              data_start=str(self.date_start),
+                              data_end=str(self.date_end),
+                              status=str(status))
+            setSessionsInfo(user_id=self.current_user, status=str(status))
+
+            msg = QMessageBox()
+            if status == "failed":
+                msg.setIcon(QMessageBox.Critical)
+            elif status == "succeed":
+                msg.setIcon(QMessageBox.Information)
+            msg.setText("Сессия завершена.")
+            msg.setInformativeText("user_id: {0},\nairport_id: {1},\ncount_users_in_airport: {2},\ntime_spent: {3},\ndata_start: {4},\ndata_end: {5},\nstatus: {6}".format(self.current_user, self.current_airport, self.count_users, str(self.date_end-self.date_start), str(self.date_start), str(self.date_end), str(status)))
+            msg.setWindowTitle("Результаты сохранены")
+            msg.exec_()
 
     def updateTime(self, time_string):
         self.lbl_time.setText(time_string)
@@ -384,8 +411,8 @@ class MainWindow(QWidget):
                                               number=flight_info["number"],
                                               firm=flight_info["firm"],
                                               model=flight_info["model"],
-                                              time_show=flight_info["time_show"]
-                                              )
+                                              time_show=flight_info["time_show"],
+                                              time_on_runway=flight_info["time_on_runway"])
                                  )
         self.btns_flights[-1].clicked.connect(self.onBtnFlightClick)  # при клике на кнопку
         self.count_all_flights += 1
@@ -403,6 +430,11 @@ class MainWindow(QWidget):
             self.takeoff_flights_count.setText(str(self.count_takeoff_flights))  # меняем текст
 
     def updateRunways(self):
+        # Главное ограничение для диспетчера - если кол-во рейсов в одном из блоков больше 10, то программа останавливается
+        if self.count_boarding_flights > 10 or self.count_takeoff_flights > 10:
+            self.btnStartActive = False
+            self.btnStartClick(status="failed")
+
         if self.current_runway != -1 and self.current_flight != -1:
             if self.btns_flights[self.current_flight].type == "boarding_flight":
                 self.count_boarding_flights -= 1
@@ -413,6 +445,7 @@ class MainWindow(QWidget):
                 self.scrollW_takeoff_flights.setFixedHeight(self.count_takeoff_flights * (42 + 7))
                 self.takeoff_flights_count.setText(str(self.count_takeoff_flights))  # меняем текст
             self.count_flights_on_runways[self.current_runway] += 1
+            self.btns_flights[self.current_flight].current_runway = self.current_runway
             self.runways[self.current_runway].VLayout_runway_flights.addWidget(self.btns_flights[self.current_flight])
             self.runways[self.current_runway].scrollW_runway.setFixedHeight(self.count_flights_on_runways[self.current_runway] * (50 + 13))
             self.runways[self.current_runway].runway_count.setText(str(self.count_flights_on_runways[self.current_runway]))  # меняем текст
@@ -431,6 +464,7 @@ class MainWindow(QWidget):
             self.btns_flights[self.current_flight].setFixedWidth(253)
             self.btns_flights[self.current_flight].setFixedHeight(50)
             self.btns_flights[self.current_flight].can_click = False
+            self.btns_flights[self.current_flight].start_time_on_runway = time.strftime("%H:%M:%S", time.localtime())
             self.btns_flights[self.current_flight].lbl_number.setStyleSheet("background:rgb(217, 217, 217); color:black;")
             self.btns_flights[self.current_flight].lbl_number.setFont(QtGui.QFont('Helvetica', 11, weight=QtGui.QFont.Bold))  # изменяем шрифт
             self.btns_flights[self.current_flight].lbl_number.setFixedWidth(38)
@@ -453,7 +487,47 @@ class MainWindow(QWidget):
             self.btns_flights[self.current_flight].lbl_time_show.setWordWrap(True)  # перенос текста
             self.current_flight = -1
 
+        # Скрываем рейсы, которые уже не должны находиться на взлётно-посадочной полосе
+        for i in range(len(self.btns_flights)):
+            if self.btns_flights[i].can_click == False and self.btns_flights[i].start_time_on_runway != "":
+                if datetime.now() >= datetime(year=datetime.now().year, month=datetime.now().month,
+                                              day=datetime.now().day,
+                                              hour=int(self.btns_flights[i].start_time_on_runway[:2]),
+                                              minute=int(self.btns_flights[i].start_time_on_runway[3:5]),
+                                              second=int(self.btns_flights[i].start_time_on_runway[6:])) + timedelta(
+                    seconds=int(self.btns_flights[i].time_on_runway)):
+                    self.btns_flights[i].hide()  # скрываем устаревший рейс
+                    self.btns_flights[i].start_time_on_runway = ""
+                    self.count_flights_on_runways[self.btns_flights[i].current_runway] -= 1
+                    self.runways[self.btns_flights[i].current_runway].scrollW_runway.setFixedHeight(
+                        self.count_flights_on_runways[self.btns_flights[i].current_runway] * (50 + 13))
+                    self.runways[self.btns_flights[i].current_runway].runway_count.setText(
+                        str(self.count_flights_on_runways[self.btns_flights[i].current_runway]))  # меняем текст
+                    break
+
     def __del__(self):
         if self.btnStartActive == False:
+            self.date_end = datetime.now()
             self.obj_update_info.stop()  # останавливаем все процессы внутри объекта
             self.thread.quit()  # завершаем отдельный поток
+
+            # Собираем и отправляем статистику
+            setUserStatistics(id=count_all_statistics(),
+                              user_id=self.current_user,
+                              airport_id=self.current_airport,
+                              count_users_in_airport=self.count_users,
+                              time_spent=str(self.date_end - self.date_start),
+                              data_start=str(self.date_start),
+                              data_end=str(self.date_end),
+                              status="error")
+            setSessionsInfo(user_id=self.current_user, status="error")
+
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Сессия завершена.")
+            msg.setInformativeText(
+                "user_id: {0},\nairport_id: {1},\ncount_users_in_airport: {2},\ntime_spent: {3},\ndata_start: {4},\ndata_end: {5},\nstatus: {6}".format(
+                    self.current_user, self.current_airport, self.count_users, str(self.date_end - self.date_start),
+                    str(self.date_start), str(self.date_end), "error"))
+            msg.setWindowTitle("Результаты сохранены")
+            msg.exec_()

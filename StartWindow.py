@@ -226,5 +226,4 @@ class StartWindow(QMainWindow):
 
     # Завершаем отдельный поток, если окно хотят закрыть
     def closeEvent(self, event):
-        pass
         del self.main_widget
