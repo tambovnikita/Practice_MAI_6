@@ -1,3 +1,7 @@
+"""
+Тамбов Никита М1О-309С-19
+"""
+
 
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QSizePolicy, QMessageBox
